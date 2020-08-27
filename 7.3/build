@@ -8,7 +8,7 @@ TAG=${TAG:=7.3}
 
 export COMMIT_HASH=`git rev-parse --short HEAD`
 
-export IMAGE=zaherg/laravel-dusk
+export IMAGE=mochaka/laravel-dusk
 
 export IMAGE_COMMIT=$IMAGE:$TAG-$COMMIT_HASH
 
@@ -18,5 +18,6 @@ export IMAGE_NAME=$IMAGE:$TAG && \
              --build-arg VCS_REF=$COMMIT_HASH \
              --build-arg DOCKER_REPO=$DOCKER_REPO \
              --build-arg IMAGE_NAME=$IMAGE_NAME \
-             --squash --force-rm --compress --rm \
+             --force-rm --compress --rm \
              -t $IMAGE_NAME .
+docker push $IMAGE_NAME

@@ -1,46 +1,49 @@
-FROM php:7.3
+FROM ubuntu:18.04
 
-ARG BUILD_DATE
-ARG VCS_REF
-ENV COMPOSER_ALLOW_SUPERUSER 1
-
-LABEL Maintainer="Zaher Ghaibeh <z@zah.me>" \
-      Description="A simple PHP 7.3 image which contain just the minimum required to run Dusk on bitbucket pipelines." \
-      org.label-schema.name="zaherg/laravel-dusk:7.3" \
-      org.label-schema.description="A simple PHP 7.3 image which contain just the minimum required to run Dusk on bitbucket pipelines." \
-      org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.vcs-url="https://github.com/linuxjuggler/laravel-dusk" \
-      org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.schema-version="1.0.0"
-
-ENV COMPOSER_ALLOW_SUPERUSER 1 \
-    PHP_XDEBUG_DEFAULT_ENABLE ${PHP_XDEBUG_DEFAULT_ENABLE:-1} \
-    PHP_XDEBUG_REMOTE_ENABLE ${PHP_XDEBUG_REMOTE_ENABLE:-1} \
-    PHP_XDEBUG_REMOTE_HOST ${PHP_XDEBUG_REMOTE_HOST:-"127.0.0.1"} \
-    PHP_XDEBUG_REMOTE_PORT ${PHP_XDEBUG_REMOTE_PORT:-9000} \
-    PHP_XDEBUG_REMOTE_AUTO_START ${PHP_XDEBUG_REMOTE_AUTO_START:-1} \
-    PHP_XDEBUG_REMOTE_CONNECT_BACK ${PHP_XDEBUG_REMOTE_CONNECT_BACK:-1} \
-    PHP_XDEBUG_IDEKEY ${PHP_XDEBUG_IDEKEY:-docker} \
-    PHP_XDEBUG_PROFILER_ENABLE ${PHP_XDEBUG_PROFILER_ENABLE:-0} \
-    PHP_XDEBUG_PROFILER_OUTPUT_DIR ${PHP_XDEBUG_PROFILER_OUTPUT_DIR:-"/tmp"}
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+ENV DEBIAN_FRONTEND noninteractive
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apt-get update && apt-get install -y -q --no-install-recommends git libsodium-dev unzip zlib1g-dev \
-    libxpm4 libxrender1 libgtk2.0-0 libnss3 libgconf-2-4 chromium xvfb gtk2-engines-pixbuf xfonts-cyrillic \
-    xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable imagemagick x11-apps libicu-dev libzip-dev \
-    && mkdir /src && cd /src && git clone https://github.com/xdebug/xdebug.git \
-    && cd xdebug \
-    && sh ./rebuild.sh \
-    && docker-php-source extract \
-    && pecl install redis libsodium \
-    && docker-php-ext-enable xdebug redis \
-    && docker-php-source delete \
-    && docker-php-ext-install -j"$(nproc)" pdo pdo_mysql intl zip \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && apt-get autoremove \
-    && rm -rf /var/lib/apt/lists/*
+# Install apt packages
+RUN apt-get update \
+    && apt-get install -y nginx curl zip unzip git software-properties-common supervisor sqlite3 vim wget\
+    && add-apt-repository -y ppa:ondrej/php
 
-COPY conf.d/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
+RUN echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list 
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
+    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+
+RUN apt-get update && apt-get install -y --no-install-recommends git libsodium-dev unzip zlib1g-dev google-chrome-stable nodejs yarn \
+    libxpm4 libxrender1 libgtk2.0-0 libnss3 libgconf-2-4 xvfb gtk2-engines-pixbuf xfonts-cyrillic \
+    xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable imagemagick x11-apps libicu-dev libzip-dev \
+    php7.3-fpm php7.3-cli php7.3-gd php7.3-mysql php7.3-memcached php7.3-mbstring php7.3-xml php7.3-xdebug php7.3-curl \
+    php7.3-zip php7.3-memcached php7.3-imagick php7.3-sqlite3 poppler-utils \
+    && apt-get remove -y --purge software-properties-common \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Composer
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+
+# Nginx
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
+
+COPY config/default /etc/nginx/sites-available/default
+COPY config/php-fpm.conf /etc/php/7.3/fpm/php-fpm.conf
+
+EXPOSE 80
+
+COPY config/app-supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN Xvfb -ac :0 -screen 0 1280x1024x16 &
+
+CMD ["/usr/bin/supervisord"]
