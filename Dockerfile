@@ -21,8 +21,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
 RUN apt-get update && apt-get install -y --no-install-recommends git libsodium-dev unzip zlib1g-dev google-chrome-stable nodejs yarn \
     libxpm4 libxrender1 libgtk2.0-0 libnss3 libgconf-2-4 xvfb gtk2-engines-pixbuf xfonts-cyrillic \
     xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable imagemagick x11-apps libicu-dev libzip-dev \
-    php7.3-fpm php7.3-cli php7.3-gd php7.3-mysql php7.3-memcached php7.3-mbstring php7.3-xml php7.3-xdebug php7.3-curl \
-    php7.3-zip php7.3-memcached php7.3-imagick php7.3-sqlite3 poppler-utils \
+    php7.4-fpm php7.4-cli php7.4-gd php7.4-mysql php7.4-memcached php7.4-mbstring php7.4-xml php7.4-xdebug php7.4-curl \
+    php7.4-zip php7.4-memcached php7.4-imagick php7.4-sqlite3 poppler-utils \
     && apt-get remove -y --purge software-properties-common \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -38,12 +38,10 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
     && ln -sf /dev/stderr /var/log/nginx/error.log
 
 COPY config/default /etc/nginx/sites-available/default
-COPY config/php-fpm.conf /etc/php/7.3/fpm/php-fpm.conf
+COPY config/php-fpm.conf /etc/php/7.4/fpm/php-fpm.conf
 
 EXPOSE 80
 
 COPY config/app-supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-RUN Xvfb -ac :0 -screen 0 1280x1024x16 &
 
 CMD ["/usr/bin/supervisord"]
