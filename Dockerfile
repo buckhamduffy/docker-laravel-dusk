@@ -44,4 +44,6 @@ EXPOSE 80
 
 COPY config/app-supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+RUN Xvfb -ac :0 -screen 0 1280x1024x16 &
+
 CMD ["/usr/bin/supervisord"]
