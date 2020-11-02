@@ -4,8 +4,6 @@ ENV DEBIAN_FRONTEND noninteractive
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN ln -fs /usr/share/zoneinfo/Australia/Brisbane /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
-
 # Install apt packages
 RUN apt-get update \
     && apt-get install -y nginx curl zip unzip git software-properties-common supervisor sqlite3 vim wget locales \
@@ -31,6 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends git libsodium-d
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN ln -fs /usr/share/zoneinfo/Australia/Brisbane /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
 
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
