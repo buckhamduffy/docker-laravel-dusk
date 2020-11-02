@@ -1,16 +1,18 @@
 FROM ubuntu:18.04
 
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
 ENV DEBIAN_FRONTEND noninteractive
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install apt packages
 RUN apt-get update \
-    && apt-get install -y nginx curl zip unzip git software-properties-common supervisor sqlite3 vim wget\
+    && apt-get install -y nginx curl zip unzip git software-properties-common supervisor sqlite3 vim wget locales \
     && add-apt-repository -y ppa:ondrej/php
+
+ENV LANG en_AU.UTF-8
+ENV LANGUAGE en_AU:en
+ENV LC_ALL en_AU.UTF-8
+RUN sed -i '/en_AU.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
 RUN echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list 
