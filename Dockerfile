@@ -21,9 +21,10 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
 RUN apt-get update && apt-get install -y --no-install-recommends git libsodium-dev unzip zlib1g-dev google-chrome-stable nodejs yarn \
+    build-essential \ 
     libxpm4 libxrender1 libgtk2.0-0 libnss3 libgconf-2-4 xvfb gtk2-engines-pixbuf xfonts-cyrillic \
     xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable imagemagick x11-apps libicu-dev libzip-dev \
-    php7.4-fpm php7.4-cli php7.4-gd php7.4-mysql php7.4-memcached php7.4-mbstring php7.4-xml php7.4-xdebug php7.4-curl \
+    php7.4-fpm php7.4-soap php7.4-cli php7.4-gd php7.4-mysql php7.4-memcached php7.4-mbstring php7.4-xml php7.4-xdebug php7.4-curl \
     php7.4-zip php7.4-memcached php7.4-bcmath php7.4-gmp php7.4-imagick php7.4-sqlite3 poppler-utils mysql-client \
     && apt-get remove -y --purge software-properties-common \
     && apt-get -y autoremove \
