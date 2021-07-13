@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.04 AS base
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -23,8 +23,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
     build-essential \ 
     libxpm4 libxrender1 libgtk2.0-0 libnss3 libgconf-2-4 xvfb gtk2-engines-pixbuf xfonts-cyrillic \
     xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable imagemagick x11-apps libicu-dev libzip-dev \
-    php7.4-fpm php7.4-soap php7.4-cli php7.4-gd php7.4-mysql php7.4-memcached php7.4-mbstring php7.4-xml php7.4-xdebug php7.4-curl \
-    php7.4-zip php7.4-memcached php7.4-bcmath php7.4-gmp php7.4-imagick php7.4-sqlite3 poppler-utils mysql-client \
+    php7.4-fpm php7.4-soap php7.4-cli php-pear php7.4-gd php7.4-mysql php7.4-memcached php7.4-mbstring php7.4-xml php7.4-xdebug php7.4-curl \
+    php7.4-zip php7.4-memcached php7.4-dev php7.4-bcmath php7.4-gmp php7.4-imagick php7.4-sqlite3 poppler-utils mysql-client \
     && apt-get remove -y --purge software-properties-common \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -53,3 +53,21 @@ COPY config/app-supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN Xvfb -ac :0 -screen 0 1280x1024x16 &
 
 CMD ["/usr/bin/supervisord"]
+
+FROM base AS mssql
+
+RUN apt update -y  &&  apt upgrade -y && apt-get update 
+RUN apt install -y curl python3.7 git python3-pip openjdk-8-jdk unixodbc-dev
+
+# Add SQL Server ODBC Driver 17 for Ubuntu 18.04
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+RUN apt-get update
+RUN ACCEPT_EULA=Y apt-get install -y --allow-unauthenticated msodbcsql17
+RUN ACCEPT_EULA=Y apt-get install -y --allow-unauthenticated mssql-tools
+RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
+RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+RUN pecl install sqlsrv pdo_sqlsrv
+RUN printf "priority=20\nextension=sqlsrv.so\n" > /etc/php/7.4/mods-available/sqlsrv.ini
+RUN printf "priority=30\nextension=pdo_sqlsrv.so\n" > /etc/php/7.4/mods-available/pdo_sqlsrv.ini
+RUN phpenmod sqlsrv && phpenmod pdo_sqlsrv
