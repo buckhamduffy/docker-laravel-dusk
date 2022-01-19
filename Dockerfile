@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install apt packages
 RUN apt-get update \
-    && apt-get install -y nginx curl zip unzip git software-properties-common supervisor sqlite3 vim wget locales \
+    && apt-get install -y nginx curl zip unzip git software-properties-common supervisor sqlite3 vim wget locales git \
     && add-apt-repository -y ppa:ondrej/php
 
 ENV LANG en_AU.UTF-8
